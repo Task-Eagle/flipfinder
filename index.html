@@ -885,20 +885,31 @@ loadPlatformSettings();
 
 <!-- Space Animation Script -->
 <script>
+// --- New Code ---
 const spaceContainer = document.getElementById('spaceContainer');
-const letters = "🛍️📱🌍🛒🏆🎨⚙️👟⚖️💵💵💵📦💰🚚🔍🏷️📸🏷️📉📈";
+// Define your emoji array
+const spaceEmojis = ["🛍️", "📱", "🌍", "🛒", "🏆", "🎨", "⚙️", "👟", "⚖️", "💵", "💵", "💵", "📦", "💰", "🚚", "🔍", "🏷️", "📸", "🏷️", "📉", "📈"];
 
 function createStars() {
   for(let i=0; i<60; i++) {
     const el = document.createElement('div');
-    el.className = Math.random() > 0.7 ? 'letter' : 'star';
-    if(el.className === 'star') {
+    // Randomly decide if it's a star or an emoji (keep the 30% chance for emojis)
+    const isEmoji = Math.random() > 0.7; 
+    
+    if (!isEmoji) {
+      // Standard star logic
       const s = Math.random() * 3 + 1;
+      el.className = 'star';
       el.style.width = s + 'px';
       el.style.height = s + 'px';
+      el.style.background = 'white';
+      el.style.borderRadius = '50%';
     } else {
-      el.innerText = letters[Math.floor(Math.random() * letters.length)];
-      el.style.fontSize = (Math.random() * 20 + 10) + 'px';
+      // Emoji logic
+      el.className = 'letter'; // Reuse the 'letter' class for animation styles
+      el.innerText = spaceEmojis[Math.floor(Math.random() * spaceEmojis.length)];
+      el.style.fontSize = (Math.random() * 24 + 16) + 'px'; // Slightly larger for emojis
+      el.style.textAlign = 'center';
     }
 
     el.style.left = Math.random() * 100 + '%';
