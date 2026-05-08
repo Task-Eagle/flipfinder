@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Flip Finder AI - Space Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root {
+--primary: #6c5ce7;
+--accent: #a29bfe;
+--bg-dark: #0f0c29;
+--text-light: #ffffff;
+--card-bg: rgba(255, 255, 255, 0.1);
+--success: #00b894;
+--danger: #d63031;
+--warning: #fdcb6e;
+}
+
+body {
+font-family: 'Segoe UI', system-ui, sans-serif;
+background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+color: var(--text-light);
+margin: 0;
+overflow-x: hidden;
+min-height: 100vh;
+}
+
+/* --- Space Animation --- */
+.space-container {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: -1;
+overflow: hidden;
+}
+
+.star, .letter {
+position: absolute;
+background: white;
+border-radius: 50%;
+opacity: 0.8;
+animation: zoom 3s linear infinite;
+}
+
+.letter {
+background: transparent;
+color: rgba(255, 255, 255, 0.6);
+font-size: 20px;
+font-weight: bold;
+border-radius: 0;
+animation: zoomLetters 4s linear infinite;
+}
+
+@keyframes zoom {
+0% { transform: translateZ(-100px) scale(0.1); opacity: 0; }
+50% { opacity: 1; }
+100% { transform: translateZ(1000px) scale(2); opacity: 0; }
+}
+
+@keyframes zoomLetters {
+0% { transform: translateZ(-100px) scale(0.1) rotate(0deg); opacity: 0; }
+50% { opacity: 0.8; }
+100% { transform: translateZ(1000px) scale(3) rotate(360deg); opacity: 0; }
+}
+
+/* --- Layout --- */
+.container {
+max-width: 600px;
+margin: 0 auto;
+padding: 20px;
+position: relative;
+z-index: 1;
+}
+
+h1 {
+text-align: center;
+text-shadow: 0 0 10px var(--primary);
+margin-bottom: 20px;
+font-size: 24px;
+}
+
+/* --- Cards --- */
+.card {
+background: var(--card-bg);
+backdrop-filter: blur(12px);
+border: 1px solid rgba(255, 255, 255, 0.15);
+padding: 20px;
+border-radius: 16px;
+margin-bottom: 20px;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+h3 { margin-top: 0; color: var(--accent); }
+
+/* --- Inputs --- */
+input[type="text"], input[type="number"] {
+width: 100%;
+padding: 12px;
+margin-top: 8px;
+border-radius: 10px;
+border: none;
+background: rgba(255, 255, 255, 0.9);
+color: #333;
+font-size: 16px;
+box-sizing: border-box;
+}
+
+.row {
+display: flex;
+gap: 10px;
+margin-top: 8px;
+}
+.row input { flex: 1; }
+
+/* --- Buttons --- */
+button {
+cursor: pointer;
+border: none;
+border-radius: 10px;
+padding: 12px 20px;
+font-size: 16px;
+font-weight: bold;
+transition: transform 0.2s, box-shadow 0.2s;
+width: 100%;
+margin-top: 10px;
+}
+
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn-warning { background: var(--warning); color: #333; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-small { width: auto; padding: 6px 12px; font-size: 14px; margin: 0 5px; }
+
+/* --- Account Chip --- */
+#accountChip {
+position: fixed;
+top: 15px;
+right: 15px;
+background: rgba(26, 29, 36, 0.9);
+padding: 8px 15px;
+border-radius: 20px;
+font-size: 14px;
+display: flex;
+align-items: center;
+gap: 10px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+z-index: 1000;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* --- Results & Bar --- */
+#results {
+margin-top: 15px;
+padding: 10px;
+background: rgba(0,0,0,0.2);
+border-radius: 8px;
+font-size: 14px;
+}
+.green { color: #55efc4; }
+.yellow { color: #fdcb6e; }
+.red { color: #ff7675; }
+
+.bar {
+height: 6px;
+background: rgba(255,255,255,0.1);
+border-radius: 3px;
+margin-top: 10px;
+overflow: hidden;
+}
+.fill {
+height: 100%;
+width: 0%;
+transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* --- Deal List --- */
+.deal-item {
+background: rgba(255,255,255,0.05);
+padding: 12px;
+border-radius: 10px;
+margin-bottom: 10px;
+border-left: 4px solid var(--primary);
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+}
+.deal-info { flex: 1; min-width: 200px; }
+.deal-actions { display: flex; gap: 5px; margin-top: 8px; width: 100%; justify-content: flex-end; }
+
+/* --- Login Screen --- */
+#loginCard { text-align: center; padding: 40px; }
+#app { display: none; }
+
+@media (max-width: 600px) {
+.deal-item { flex-direction: column; align-items: flex-start; }
+.deal-actions { width: 100%; justify-content: flex-end; }
+}
+
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.5; }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Space Background -->
+<div class="space-container" id="spaceContainer"></div>
+
+<div class="container">
+<h1>🚀 Flip Finder AI</h1>
+
+<!-- Login Screen -->
+<div id="loginCard" class="card">
+<h3>Welcome, Explorer!</h3>
+<p>Sign in to save your galactic deals.</p>
+<button class="btn-primary" onclick="login()">Continue with Google</button>
+</div>
+
+<!-- Main App -->
+<div id="app">
+
+<!-- Account Chip -->
+<div id="accountChip">
+<span id="userInfo">User</span>
+<button class="btn-small btn-danger" onclick="logout()" style="width:auto; padding:4px 8px;">⎋</button>
+</div>
+
+<!-- Item Scanner Card -->
+<div class="card">
+<h3>📸 Item Scanner</h3>
+<p style="font-size: 0.9em; color: #aaa;">Scan or upload a photo to auto-detect items</p>
+
+<div style="display: flex; gap: 10px; margin-bottom: 15px;">
+<button class="btn-primary" onclick="startCamera()" style="flex: 1;">
+📷 Scan Item
+</button>
+<button class="btn-primary" onclick="selectPhoto()" style="flex: 1;">
+📁 Select Photo
+</button>
+</div>
+
+<!-- Camera Preview -->
+<div id="cameraPreview" style="display: none; margin-bottom: 15px;">
+<video id="videoStream" style="width: 100%; border-radius: 10px; background: #000;"></video>
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+<button class="btn-success" onclick="capturePhoto()" style="flex: 1;">
+📸 Capture
+</button>
+<button class="btn-danger" onclick="closeCamera()" style="flex: 1;">
+✕ Cancel
+</button>
+</div>
+</div>
+
+<!-- Image Preview & Analysis -->
+<div id="imagePreview" style="display: none; margin-bottom: 15px;">
+<img id="previewImage" style="width: 100%; border-radius: 10px; max-height: 300px; object-fit: cover;">
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+<button class="btn-success" onclick="analyzeImage()" style="flex: 1;">
+🤖 Analyze
+</button>
+<button class="btn-danger" onclick="clearImage()" style="flex: 1;">
+✕ Clear
+</button>
+</div>
+</div>
+
+<!-- Analysis Results -->
+<div id="scanResults" style="display: none; margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+<div id="scanResultsContent"></div>
+<button class="btn-primary" onclick="useScannedData()" style="margin-top: 10px;">
+✨ Use This Item
+</button>
+</div>
+
+<!-- Loading Indicator -->
+<div id="scanLoading" style="display: none; text-align: center; padding: 15px;">
+<div style="font-size: 1.2em; margin-bottom: 10px;">🔄 Analyzing...</div>
+<div class="bar"><div class="fill" style="width: 100%; animation: pulse 1.5s infinite;"></div></div>
+</div>
+
+<!-- Hidden File Input -->
+<input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoSelect(event)">
+</div>
+
+<!-- Calculator Card -->
+<div class="card">
+<h3>Deal Analyzer</h3>
+
+<label>Item Name</label>
+<input id="itemName" type="text" placeholder="e.g. Vintage Camera">
+
+<div class="row">
+<div>
+<label>Buy Price ( )</label>
+<input id="sell" type="number" placeholder="0.00">
+</div>
+</div>
+
+<div class="row">
+<div>
+<label>Fee %</label>
+<input id="fee" type="number" value="13">
+</div>
+<div>
+<label>Shipping ($`)</label>
+<input id="shipping" type="number" value="5">
+</div>
+</div>
+
+<div class="row" style="align-items: center; margin-top: 10px;">
+<label style="flex:1; font-size: 14px; display:flex; align-items:center; gap:8px;">
+<input type="checkbox" id="buyerPays"> Buyer pays shipping
+</label>
+<div style="flex:1;">
+<label style="font-size:12px;">Target Profit (`$)</label>
+<input id="targetProfit" type="number" placeholder="0">
+</div>
+</div>
+
+<div id="results"></div>
+<div class="bar"><div id="fill" class="fill"></div></div>
+
+<!-- Single Save Button -->
+<button id="saveBtn" class="btn-primary" onclick="saveDeal()">✨ Save Deal</button>
+</div>
+
+<!-- Actions -->
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+<button class="btn-warning" onclick="calculateTotalProfit()">💰 Total Profit</button>
+<button class="btn-success" onclick="exportToCSV()">📥 Export CSV</button>
+</div>
+
+<div id="totalDisplay" style="text-align: center; font-size: 1.2em; margin-bottom: 20px; color: #55efc4; font-weight: bold;"></div>
+
+<!-- Deals List -->
+<div class="card">
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<h3>Your Deals</h3>
+<button class="btn-small btn-danger" onclick="clearDeals()">Clear All</button>
+</div>
+<div id="dealList"></div>
+</div>
+
+</div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCUXGwHEoTSiK8ZvIkCXUGPmvk1z3NU3_M",
+authDomain: "flipfinder-ai.firebaseapp.com",
+databaseURL: "https://flipfinder-ai-default-rtdb.firebaseio.com/",
+projectId: "flipfinder-ai",
+storageBucket: "flipfinder-ai.firebasestorage.app",
+messagingSenderId: "254057060734",
+appId: "1:254057060734:web:ef1c31ae19a3d409883b2f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let localDeals = []; // Local cache for editing/exporting
+let editingId = null; // Track if we are editing
+
+// --- Auth Logic ---
+window.login = async () => {
+try {
+await signInWithPopup(auth, provider);
+} catch (err) {
+console.error("Login error:", err);
+alert(err.message);
+}
+};
+
+window.logout = async () => {
+await signOut(auth);
+};
+
+onAuthStateChanged(auth, (user) => {
+const loginCard = document.getElementById("loginCard");
+const appDiv = document.getElementById("app");
+const userInfo = document.getElementById("userInfo");
+
+if (user) {
+currentUser = user;
+loginCard.style.display = "none";
+appDiv.style.display = "block";
+userInfo.innerText = user.email.split('@')[0];
+loadDealsFromDB();
+} else {
+currentUser = null;
+loginCard.style.display = "block";
+appDiv.style.display = "none";
+localDeals = [];
+renderDeals();
+}
+});
+
+// --- Image Scanner Logic ---
+let currentImageData = null;
+let mediaStream = null;
+
+window.startCamera = async () => {
+try {
+mediaStream = await navigator.mediaDevices.getUserMedia({
+video: { facingMode: 'environment' }
+});
+const video = document.getElementById('videoStream');
+video.srcObject = mediaStream;
+document.getElementById('cameraPreview').style.display = 'block';
+document.getElementById('imagePreview').style.display = 'none';
+document.getElementById('scanResults').style.display = 'none';
+} catch (err) {
+alert('Camera access denied. Please enable camera permissions.');
+console.error('Camera error:', err);
+}
+};
+
+window.closeCamera = () => {
+if (mediaStream) {
+mediaStream.getTracks().forEach(track => track.stop());
+mediaStream = null;
+}
+document.getElementById('cameraPreview').style.display = 'none';
+};
+
+window.capturePhoto = () => {
+const video = document.getElementById('videoStream');
+const canvas = document.createElement('canvas');
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(video, 0, 0);
+
+currentImageData = canvas.toDataURL('image/jpeg');
+
+document.getElementById('previewImage').src = currentImageData;
+document.getElementById('cameraPreview').style.display = 'none';
+document.getElementById('imagePreview').style.display = 'block';
+
+closeCamera();
+};
+
+window.selectPhoto = () => {
+document.getElementById('photoInput').click();
+};
+
+window.handlePhotoSelect = (event) => {
+const file = event.target.files;
+if (!file) return;
+
+const reader = new FileReader();
+reader.onload = (e) => {
+currentImageData = e.target.result;
+document.getElementById('previewImage').src = currentImageData;
+document.getElementById('cameraPreview').style.display = 'none';
+document.getElementById('imagePreview').style.display = 'block';
+document.getElementById('scanResults').style.display = 'none';
+};
+reader.readAsDataURL(file);
+};
+
+window.clearImage = () => {
+currentImageData = null;
+document.getElementById('imagePreview').style.display = 'none';
+document.getElementById('scanResults').style.display = 'none';
+document.getElementById('photoInput').value = '';
+};
+
+window.analyzeImage = async () => {
+if (!currentImageData) {
+alert('No image selected');
+return;
+}
+
+document.getElementById('scanLoading').style.display = 'block';
+document.getElementById('scanResults').style.display = 'none';
+
+try {
+// Replace with your local AI model URL
+const response = await fetch('http://localhost:5000/analyze', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+},
+body: JSON.stringify({
+image: currentImageData,
+}),
+});
+
+if (!response.ok) {
+throw new Error(Server error: ${response.status}`);
+}
+
+const result = await response.json();
+
+// Display results
+const resultsDiv = document.getElementById('scanResultsContent');
+resultsDiv.innerHTML = &lt;div style="margin-bottom: 10px;"&gt; &lt;div style="font-weight: bold; color: #a29bfe; margin-bottom: 8px;"&gt;Detection Results:&lt;/div&gt; &lt;div style="font-size: 0.95em; line-height: 1.6;"&gt; &lt;div&gt;&lt;strong&gt;Item:&lt;/strong&gt;${result.item_name || 'Unknown'}</div>
+<div><strong>Category:</strong>  {(result.confidence * 100).toFixed(1)}%</div>
+latex
+{result.description ? `<div&gt;&lt;strong&gt;Description:&lt;/strong&gt; 
+
+{result.description}</div>: ''} &lt;/div&gt; &lt;/div&gt;;
+
+document.getElementById('scanLoading').style.display = 'none';
+document.getElementById('scanResults').style.display = 'block';
+
+// Store data for later use
+window.scannedItemData = result;
+
+} catch (err) {
+document.getElementById('scanLoading').style.display = 'none';
+alert('Error analyzing image: ' + err.message);
+console.error('Analysis error:', err);
+}
+};
+
+window.useScannedData = () => {
+if (!window.scannedItemData) return;
+
+const data = window.scannedItemData;
+
+// Populate the form with scanned data
+document.getElementById('itemName').value = data.item_name || '';
+
+// You can add more fields here if your AI returns estimated prices
+if (data.estimated_buy_price) {
+document.getElementById('buy').value = data.estimated_buy_price;
+}
+if (data.estimated_sell_price) {
+document.getElementById('sell').value = data.estimated_sell_price;
+}
+
+// Trigger calculation
+calculate();
+
+// Scroll to form
+window.scrollTo({ top: 0, behavior: 'smooth' });
+
+// Clear scan
+clearImage();
+};
+
+// --- Calculation Logic ---
+window.calculate = () => {
+const buy = parseFloat(document.getElementById("buy").value) || 0;
+const sell = parseFloat(document.getElementById("sell").value) || 0;
+const feePercent = parseFloat(document.getElementById("fee").value) || 13;
+const shippingInput = parseFloat(document.getElementById("shipping").value) || 5;
+const buyerPays = document.getElementById("buyerPays").checked;
+const targetProfit = parseFloat(document.getElementById("targetProfit").value) || 0;
+
+const shipping = buyerPays ? 0 : shippingInput;
+const fees = sell * (feePercent / 100);
+const profit = sell - buy - fees - shipping;
+const roi = buy > 0 ? (profit / buy) * 100 : 0;
+
+let maxBuy = sell - fees - shipping;
+if (targetProfit > 0) maxBuy -= targetProfit;
+
+let decision = "", cls = "", insight = "", confidence = 0;
+
+if (profit > 0 && roi > 50) { decision = "🔥 BUY"; cls = "green"; insight = "Excellent margin."; confidence = 90; }
+else if (profit > 0 && roi > 25) { decision = "✅ GOOD"; cls = "green"; insight = "Solid deal."; confidence = 65; }
+else if (profit > 0) { decision = "⚠️ RISKY"; cls = "yellow"; insight = "Low margin."; confidence = 45; }
+else { decision = "❌ SKIP"; cls = "red"; insight = "Not profitable."; confidence = 15; }
+
+const resDiv = document.getElementById("results");
+resDiv.innerHTML = &lt;b class="${cls}" style="font-size:1.1em">${decision}&lt;/b&gt;&lt;br&gt; Profit: ${profit.toFixed(2)} | ROI: ${roi.toFixed(1)}%&lt;br&gt; Max Buy: ${maxBuy.toFixed(2)}<br>
+<small>${insight}&lt;/small&gt;;
+
+const fill = document.getElementById("fill");
+fill.style.width = confidence + "%";
+fill.style.background = confidence > 70 ? "#4caf50" : confidence > 40 ? "#ffc107" : "#ff4d4d";
+};
+
+// Attach listeners
+["buy", "sell", "fee", "shipping", "targetProfit"].forEach(id => {
+document.getElementById(id).addEventListener("input", calculate);
+});
+document.getElementById("buyerPays").addEventListener("change", calculate);
+
+// --- Save / Update Logic ---
+window.saveDeal = () => {
+if (!currentUser) return;
+
+const itemName = document.getElementById("itemName").value.trim();
+const buy = parseFloat(document.getElementById("buy").value);
+const sell = parseFloat(document.getElementById("sell").value);
+
+if (!itemName || isNaN(buy) || isNaN(sell)) {
+alert("Please fill in Item Name, Buy, and Sell prices.");
+return;
+}
+
+const feePercent = parseFloat(document.getElementById("fee").value) || 13;
+const fees = sell * (feePercent / 100);
+const profit = sell - buy - fees;
+const roi = buy > 0 ? (profit / buy) * 100 : 0;
+
+const dealData = { itemName, buy, sell, profit, roi, updatedAt: Date.now() };
+
+if (editingId) {
+// Update existing
+set(ref(db, "deals/" + currentUser.uid + "/" + editingId), dealData)
+.then(() => {
+alert("Deal updated!");
+resetForm();
+})
+.catch(err => alert("Error updating: " + err.message));
+} else {
+// Create new
+push(ref(db, "deals/" + currentUser.uid), dealData)
+.then(() => {
+alert("Deal saved to the galaxy!");
+resetForm();
+})
+.catch(err => alert("Error saving: " + err.message));
+}
+};
+
+function resetForm() {
+document.getElementById("itemName").value = "";
+document.getElementById("buy").value = "";
+document.getElementById("sell").value = "";
+document.getElementById("results").innerHTML = "";
+document.getElementById("fill").style.width = "0%";
+editingId = null;
+document.getElementById("saveBtn").innerText = "✨ Save Deal";
+document.getElementById("saveBtn").classList.remove("btn-warning");
+document.getElementById("saveBtn").classList.add("btn-primary");
+}
+
+// --- Load Deals ---
+function loadDealsFromDB() {
+const dealsRef = ref(db, "deals/" + currentUser.uid);
+onValue(dealsRef, (snapshot) => {
+const data = snapshot.val();
+localDeals = [];
+if (data) {
+Object.keys(data).forEach(key => {
+localDeals.push({ id: key, ...data[key] });
+});
+}
+renderDeals();
+});
+}
+
+function renderDeals() {
+const list = document.getElementById("dealList");
+list.innerHTML = "";
+
+// Sort by newest
+localDeals.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+localDeals.forEach(deal => {
+const div = document.createElement("div");
+div.className = "deal-item";
+const profitClass = deal.profit >= 0 ? "green" : "red";
+
+div.innerHTML = &lt;div class="deal-info"&gt; &lt;div style="font-weight:bold; font-size:1.1em;"&gt;${deal.itemName}</div>
+<div style="font-size:0.9em; color:#ccc;">Buy: ${deal.buy} → Sell: ${deal.sell}</div>
+<div class="${profitClass}" style="font-weight:bold;"&gt;Profit: ${deal.profit.toFixed(2)} (${deal.roi.toFixed(1)}%)&lt;/div&gt; &lt;/div&gt; &lt;div class="deal-actions"&gt; &lt;button class="btn-small btn-warning" onclick="editDeal('${deal.id}')">Edit</button>
+<button class="btn-small btn-danger" onclick="deleteDeal('${deal.id}')"&gt;Delete&lt;/button&gt; &lt;/div&gt;;
+list.appendChild(div);
+});
+}
+
+// Expose functions to window for HTML onclick
+window.editDeal = (id) => {
+const deal = localDeals.find(d => d.id === id);
+if (!deal) return;
+
+document.getElementById("itemName").value = deal.itemName;
+document.getElementById("buy").value = deal.buy;
+document.getElementById("sell").value = deal.sell;
+
+editingId = id;
+const btn = document.getElementById("saveBtn");
+btn.innerText = "✏️ Update Deal";
+btn.classList.remove("btn-primary");
+btn.classList.add("btn-warning");
+
+// Scroll to top
+window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteDeal = (id) => {
+if (confirm("Delete this deal?")) {
+remove(ref(db, "deals/" + currentUser.uid + "/" + id));
+}
+};
+
+window.clearDeals = () => {
+if (confirm("Delete ALL deals? This cannot be undone.")) {
+remove(ref(db, "deals/" + currentUser.uid));
+}
+};
+
+// --- New Features ---
+window.calculateTotalProfit = () => {
+const total = localDeals.reduce((sum, deal) => sum + (deal.profit || 0), 0);
+const display = document.getElementById("totalDisplay");
+display.innerText = Total Galactic Profit: ${total.toFixed(2)}`;
+display.style.transform = "scale(1.1)";
+setTimeout(() => display.style.transform = "scale(1)", 300);
+};
+
+window.exportToCSV = () => {
+if (localDeals.length === 0) {
+alert("No deals to export!");
+return;
+}
+let csv = "Name,Buy,Sell,Profit,ROI\n";
+localDeals.forEach(d => {
+csv += "${d.itemName}", {d.sell}, {d.roi.toFixed(1)}%\n`;
+});
+
+const blob = new Blob([csv], { type: 'text/csv' });
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'flip-finder-deals.csv';
+a.click();
+window.URL.revokeObjectURL(url);
+};
+
+</script>
+
+<!-- Space Animation Script -->
+<script>
+const spaceContainer = document.getElementById('spaceContainer');
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function createStars() {
+for(let i=0; i<60; i++) {
+const el = document.createElement('div');
+el.className = Math.random() > 0.7 ? 'letter' : 'star';
+if(el.className === 'star') {
+const s = Math.random() * 3 + 1;
+el.style.width = s + 'px';
+el.style.height = s + 'px';
+} else {
+el.innerText = letters[Math.floor(Math.random() * letters.length)];
+el.style.fontSize = (Math.random() * 20 + 10) + 'px';
+}
+
+el.style.left = Math.random() * 100 + '%';
+el.style.top = Math.random() * 100 + '%';
+el.style.animationDuration = (Math.random() * 3 + 2) + 's';
+el.style.animationDelay = Math.random() * 5 + 's';
+
+spaceContainer.appendChild(el);
+}
+}
+createStars();
+</script>
+</body>
+</html>
