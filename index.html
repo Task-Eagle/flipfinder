@@ -540,18 +540,56 @@ let currentImageData = null;
 let mediaStream = null;
 
 window.startCamera = async () => {
+  // 1. Ensure any previous camera tracks are stopped before asking for new permission
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+  }
+
   try {
+    const videoElement = document.getElementById('videoStream');
+    
+    // Hide results from previous attempts to keep UI clean
+    document.getElementById('scanResults').style.display = 'none';
+    document.getElementById('imagePreview').style.display = 'none';
+
+    // Request permission
     mediaStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment' }
     });
-    const video = document.getElementById('videoStream');
-    video.srcObject = mediaStream;
+
+    videoElement.srcObject = mediaStream;
     document.getElementById('cameraPreview').style.display = 'block';
-    document.getElementById('imagePreview').style.display = 'none';
-    document.getElementById('scanResults').style.display = 'none';
+    
+    // Optional: Add a small delay to ensure video stream is ready
+    videoElement.onloadedmetadata = () => {
+      videoElement.play();
+    };
+
   } catch (err) {
-    alert('Camera access denied. Please enable camera permissions.');
+    // 2. Handle specific error types for better feedback
+    let message = "Camera access denied.";
+    
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      message = "Camera permission was denied. Please enable camera permissions in your browser settings and try again.";
+    } else if (err.name === 'NotFoundError') {
+      message = "No camera found on this device.";
+    } else if (err.name === 'NotReadableError') {
+      message = "Camera is already in use by another app or tab.";
+    }
+
+    // 3. Use a confirmation dialog instead of a simple alert to break the loop
+    // This gives the user a clear path to fix it without getting stuck
+    if (confirm(message + "\n\nDo you want to open browser settings to fix this?")) {
+      // Attempt to open settings (works in some browsers, but mostly just a helpful hint)
+      window.location.href = "browser://settings/content/camera"; 
+    }
+    
     console.error('Camera error:', err);
+    
+    // Ensure UI is reset so the user can try again cleanly
+    document.getElementById('cameraPreview').style.display = 'none';
+    mediaStream = null;
   }
 };
 
