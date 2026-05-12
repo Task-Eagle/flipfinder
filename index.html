@@ -616,17 +616,23 @@ window.analyzeImage = async () => {
   document.getElementById('scanResults').style.display = 'none';
 
   try {
-    // Mock analysis for demo (Replace with real API call)
-    // Simulating network delay
-    await new Promise(r => setTimeout(r, 1500));
-    
-    const result = {
-      item_name: "Vintage Camera",
-      confidence: 0.85,
-      description: "Looks like a vintage film camera in good condition.",
-      estimated_buy_price: 25,
-      estimated_sell_price: 150
-    };
+    // Convert base64 to blob for FormData
+    const blob = await (await fetch(currentImageData)).blob();
+    const formData = new FormData();
+    formData.append('image', blob, 'uploaded-image.jpg');
+
+    // YOUR CLOUDFLARE WORKER URL HERE
+    const response = await fetch('https://your-worker-name.your-subdomain.workers.dev/analyze', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Analysis:', result);
 
     // Display results
     const resultsDiv = document.getElementById('scanResultsContent');
@@ -634,9 +640,11 @@ window.analyzeImage = async () => {
       <div style="margin-bottom: 10px;">
         <div style="font-weight: bold; color: #a29bfe; margin-bottom: 8px;">Detection Results:</div>
         <div style="font-size: 0.95em; line-height: 1.6;">
-          <div><strong>Item:</strong> ${result.item_name}</div>
+          <div><strong>Item:</strong> ${result.item_name || 'Unknown'}</div>
           <div><strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%</div>
           ${result.description ? `<div><strong>Description:</strong> ${result.description}</div>` : ''}
+          ${result.estimated_buy_price ? `<div><strong>Est. Buy Price:</strong> $${result.estimated_buy_price}</div>` : ''}
+          ${result.estimated_sell_price ? `<div><strong>Est. Sell Price:</strong> $${result.estimated_sell_price}</div>` : ''}
         </div>
       </div>
     `;
